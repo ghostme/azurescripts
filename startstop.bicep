@@ -35,11 +35,8 @@ resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' =
       inEdit: true
     }
     publishContentLink: {
-      uri: 'https://your-storage-account.blob.core.windows.net/scripts/manage-vms.ps1'
-      contentHash: {
-        algorithm: 'SHA256'
-        value: 'Your-script-content-hash'  // Add the appropriate content hash for the script
-      }
+      uri: 'https://raw.githubusercontent.com/ghostme/azurescripts/main/startstopVM.ps1'
+     
     }
   }
 }
