@@ -32,7 +32,7 @@ resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' =
     logVerbose: true
     runbookType: 'PowerShell'
     draft: {
-      inEdit: true
+      inEdit: false
     }
     publishContentLink: {
       uri: 'https://raw.githubusercontent.com/ghostme/azurescripts/main/startstopVM.ps1'
