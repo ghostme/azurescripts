@@ -4,12 +4,12 @@ param automationAccountName string = 'myAutomationAccount'
 param runbookName string = 'ManageVMsRunbook'
 param startScheduleName string = 'StartVMsSchedule'
 param stopScheduleName string = 'StopVMsSchedule'
-param startTime string = '2024-09-08T06:00:00Z'  // Set your desired start time (UTC)
-param stopTime string = '2024-09-08T18:00:00Z'  // Set your desired stop time (UTC)
-param subscriptionId string = subscription().subscriptionId  // Subscription ID for role assignment
+param startTime string = '2024-09-09T20:30:00-04:00'  // Set your desired start time (UTC)
+param stopTime string = '2024-09-09T18:15:00-04:00'  // Set your desired stop time (UTC)
+
 
 // Define the automation account
-resource automationAccount 'Microsoft.Automation/automationAccounts@2020-01-13-preview' = {
+resource automationAccount 'Microsoft.Automation/automationAccounts@2023-11-01' = {
   name: automationAccountName
   location: location
  
@@ -23,7 +23,7 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2020-01-13-p
 }
 
 // Define the runbook resource
-resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' = {
+resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2023-11-01' = {
   parent: automationAccount
   name: runbookName
   location: location
@@ -32,9 +32,6 @@ resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' =
     logProgress: true
     logVerbose: true
     runbookType: 'PowerShell'
-    draft: {
-      inEdit: false
-    }
     publishContentLink: {
       uri: 'https://raw.githubusercontent.com/ghostme/azurescripts/main/startstopVM.ps1'
      
@@ -43,7 +40,7 @@ resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' =
 }
 
 // Define the start schedule
-resource startSchedule 'Microsoft.Automation/automationAccounts/schedules@2015-10-31' = {
+resource startSchedule 'Microsoft.Automation/automationAccounts/schedules@2023-11-01' = {
   parent: automationAccount
   name: startScheduleName
   properties: {
@@ -57,7 +54,7 @@ resource startSchedule 'Microsoft.Automation/automationAccounts/schedules@2015-1
 }
 
 // Define the stop schedule
-resource stopSchedule 'Microsoft.Automation/automationAccounts/schedules@2015-10-31' = {
+resource stopSchedule 'Microsoft.Automation/automationAccounts/schedules@2023-11-01' = {
   parent: automationAccount
   name: stopScheduleName
   properties: {
@@ -71,15 +68,15 @@ resource stopSchedule 'Microsoft.Automation/automationAccounts/schedules@2015-10
 }
 
 // Define the job schedule for starting VMs
-resource startJob 'Microsoft.Automation/automationAccounts/jobSchedules@2015-10-31' = {
+resource startJob 'Microsoft.Automation/automationAccounts/jobSchedules@2023-11-01' = {
   parent: automationAccount
-  name: '${automationAccountName}-StartJob'
+  name:  guid(runbook.name)
   properties: {
     schedule: {
       name: startSchedule.name
     }
     runbook: {
-      name: runbookName
+      name: runbook.name
     }
     parameters: {
       Action: 'start'  // Start action linked with start schedule
@@ -88,32 +85,21 @@ resource startJob 'Microsoft.Automation/automationAccounts/jobSchedules@2015-10-
 }
 
 // Define the job schedule for stopping VMs
-resource stopJob 'Microsoft.Automation/automationAccounts/jobSchedules@2015-10-31' = {
+resource stopJob 'Microsoft.Automation/automationAccounts/jobSchedules@2023-11-01' = {
   parent: automationAccount
-  name: '${automationAccountName}-StopJob'
+  name: guid(runbook.id)
   properties: {
     schedule: {
       name: stopSchedule.name
     }
     runbook: {
-      name: runbookName
+      name: runbook.name
     }
     parameters: {
       Action: 'stop'  // Stop action linked with stop schedule
     }
   }
 }
-
-// // Role assignment for the system-assigned managed identity as Virtual Machine Contributor
-// resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-//   name: guid(subscription().id, 'Contributor')
-
-//   properties: {
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')  // Virtual Machine Contributor role ID
-//     principalId: automationAccount.identity.principalId  // Assign to the system-assigned identity
-//     principalType: 'ServicePrincipal'
-//   }
-// }
 
 output automationAccountName string = automationAccount.name
 output runbookName string = runbook.name
