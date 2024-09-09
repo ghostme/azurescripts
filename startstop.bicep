@@ -12,13 +12,14 @@ param subscriptionId string = subscription().subscriptionId  // Subscription ID 
 resource automationAccount 'Microsoft.Automation/automationAccounts@2020-01-13-preview' = {
   name: automationAccountName
   location: location
-  sku: {
-    name: 'Basic'
-  }
+ 
   identity: {
     type: 'SystemAssigned'
   }
-  properties: {}
+  properties: { 
+    sku: {
+    name: 'Basic'
+  }}
 }
 
 // Define the runbook resource
