@@ -1,11 +1,27 @@
 
+@description('Location where the resources will be deployed, defaults to the resource group\'s location.')
 param location string = resourceGroup().location
-param automationAccountName string = 'myAutomationAccount'
-param runbookName string = 'ManageVMsRunbook'
-param startScheduleName string = 'StartVMsSchedule'
-param stopScheduleName string = 'StopVMsSchedule'
-param startTime string = '2024-09-09T20:30:00-04:00'  // Set your desired start time (UTC)
-param stopTime string = '2024-09-09T18:15:00-04:00'  // Set your desired stop time (UTC)
+
+@description('The name of the Automation Account.')
+param automationAccountName string 
+
+@description('The name of the runbook to manage VM start/stop actions.')
+param runbookName string 
+
+@description('The name of the schedule for starting VMs.')
+param startScheduleName string
+
+@description('The name of the schedule for stopping VMs.')
+param stopScheduleName string 
+
+@description('The time to start VMs (in UTC format, e.g., 2023-12-01T00:00:00Z).')
+param startTime string
+
+@description('The time to stop VMs (in UTC format, e.g., 2023-12-01T18:00:00Z).')
+param stopTime string
+
+@description('URI of the PowerShell script that the runbook will execute.')
+param runbookScriptUri string
 
 
 // Define the automation account
@@ -33,7 +49,7 @@ resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2023-11-01' =
     logVerbose: true
     runbookType: 'PowerShell'
     publishContentLink: {
-      uri: 'https://raw.githubusercontent.com/ghostme/azurescripts/main/startstopVM.ps1'
+      uri: runbookScriptUri
      
     }
   }
@@ -59,6 +75,7 @@ resource startSchedule 'Microsoft.Automation/automationAccounts/schedules@2023-1
         'Friday'
       ]
   }
+  }
 }
 
 // Define the stop schedule
@@ -78,7 +95,7 @@ resource stopSchedule 'Microsoft.Automation/automationAccounts/schedules@2023-11
 // Define the job schedule for starting VMs
 resource startJob 'Microsoft.Automation/automationAccounts/jobSchedules@2023-11-01' = {
   parent: automationAccount
-  name:  guid(runbook.name)
+  name:   guid(resourceGroup().id, runbook.name, startSchedule.name)
   properties: {
     schedule: {
       name: startSchedule.name
@@ -95,7 +112,7 @@ resource startJob 'Microsoft.Automation/automationAccounts/jobSchedules@2023-11-
 // Define the job schedule for stopping VMs
 resource stopJob 'Microsoft.Automation/automationAccounts/jobSchedules@2023-11-01' = {
   parent: automationAccount
-  name: guid(runbook.id)
+  name: guid(resourceGroup().id, runbook.name, stopSchedule.name)
   properties: {
     schedule: {
       name: stopSchedule.name
@@ -113,3 +130,4 @@ output automationAccountName string = automationAccount.name
 output runbookName string = runbook.name
 output startScheduleName string = startSchedule.name
 output stopScheduleName string = stopSchedule.name
+output systemAssignedIdentityId string = automationAccount.identity.principalId

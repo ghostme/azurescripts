@@ -1,3 +1,50 @@
+<#
+.SYNOPSIS
+    This script starts or stops Azure Virtual Machines (VMs) in a specified order based on tags.
+
+.DESCRIPTION
+    The script authenticates to Azure using the system-assigned managed identity of the automation account.
+    It then either starts or stops VMs based on the provided 'Action' parameter. VMs are identified by a tag called 'StartupOrder' 
+    and are either started in ascending order (1, 2, 3, etc.) or stopped in reverse order (3, 2, 1, etc.).
+    
+    The script performs the following steps:
+    - Authenticates with Azure using the system-assigned identity.
+    - Retrieves all VMs that match the 'StartupOrder' tag and are in a specific state (deallocated or running).
+    - Starts VMs sequentially or stops them in reverse sequence based on the tag value.
+    - Implements a retry mechanism to ensure that each VM is fully started or stopped before proceeding to the next.
+    - Handles errors and logs outputs for troubleshooting.
+
+.PARAMETER Action
+    -Action <string>
+    Specifies whether to 'start' or 'stop' the VMs. Based on this parameter, the script will either start VMs in sequence or stop them in reverse sequence.
+    Accepted values:
+    - 'start' : Starts the VMs in ascending order based on the 'StartupOrder' tag.
+    - 'stop'  : Stops the VMs in descending order based on the 'StartupOrder' tag.
+
+.EXAMPLES
+    Example 1:
+    Start VMs in the specified sequence.
+    ```powershell
+    .\Manage-VMs.ps1 -Action "start"
+    ```
+    This command starts the VMs based on the 'StartupOrder' tag.
+
+    Example 2:
+    Stop VMs in the reverse sequence.
+    ```powershell
+    .\Manage-VMs.ps1 -Action "stop"
+    ```
+    This command stops the VMs based on the 'StartupOrder' tag in reverse order.
+
+.NOTES
+    - The script relies on the 'StartupOrder' tag to define the sequence in which VMs are started or stopped.
+    - The script includes retry mechanisms to check the VM status and waits until each VM is in the desired state.
+    - Ensure that the Automation Account has appropriate permissions (e.g., Virtual Machine Contributor role) to manage the VMs.
+    - Timeouts and errors are handled using try/catch blocks to provide better error reporting.
+#>
+
+
+
 param (
     [string]$Action  # "start" or "stop"
 )
